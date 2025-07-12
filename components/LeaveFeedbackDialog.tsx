@@ -2,15 +2,13 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Textarea } from "./ui/textarea";
 import { Star } from "lucide-react";
-import { submitFeedback } from "@/app/actions";
-// Placeholder for the real server action
-async function submitFeedback(data: { swapRequestId: string, score: number, comment: string }) {
-    console.log("Submitting feedback:", data);
-}
+import { submitFeedback } from "@/app/actions"; // <-- The only reference to submitFeedback
 
 type LeaveFeedbackDialogProps = {
   swapRequestId: string;
@@ -28,11 +26,17 @@ export default function LeaveFeedbackDialog({ swapRequestId, targetUserName }: L
       alert("Please select a rating.");
       return;
     }
-    // TODO: Replace with real server action call
-    await submitFeedback({ swapRequestId, score: rating, comment });
-    alert("Feedback submitted!");
-    setIsOpen(false);
+    try {
+      // This now correctly calls the imported function
+      await submitFeedback({ swapRequestId, score: rating, comment });
+      alert("Feedback submitted successfully!");
+      setIsOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert((error as Error).message || "Failed to submit feedback.");
+    }
   };
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

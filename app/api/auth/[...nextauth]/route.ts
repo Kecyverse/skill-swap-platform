@@ -5,8 +5,6 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 
-// You need to get these from the Google Cloud Console
-// https://console.cloud.google.com/apis/credentials
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
@@ -14,7 +12,6 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
   throw new Error("Missing Google OAuth credentials");
 }
 
-// IMPORTANT: We EXPORT the authOptions so they can be used in other files
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -22,9 +19,37 @@ export const authOptions: NextAuthOptions = {
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
     }),
-    // You can add other providers here (e.g., GitHub, Email)
   ],
-  // You can add custom pages, callbacks, etc. here if needed
+  // --- THIS IS THE KEY CHANGE ---
+  // Explicitly use the JWT strategy for sessions.
+  session: {
+    strategy: "jwt",
+  },
+  // -----------------------------
+  pages: {
+    signIn: "/auth/signin",
+  },
+  callbacks: {
+    // 1. JWT callback: Runs first.
+    // This is where we add the user's database ID to the token.
+    jwt({ token, user }) {
+      if (user) {
+        // On initial sign-in, the `user` object is available.
+        token.id = user.id;
+      }
+      console.log("JWT CALLBACK - Token:", token); // For debugging
+      return token;
+    },
+    // 2. Session callback: Runs second.
+    // This is where we add the ID from the token to the final session object.
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      console.log("SESSION CALLBACK - Session:", session); // For debugging
+      return session;
+    },
+  },
 };
 
 const handler = NextAuth(authOptions);
