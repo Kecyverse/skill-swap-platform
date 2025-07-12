@@ -27,6 +27,12 @@ model User {
   isPublic      Boolean   @default(true)
   isBanned      Boolean   @default(false) // For the admin stretch goal
 
+  createdAt     DateTime  @default(now())
+
+ averageRating Float?
+  ratingsGiven  Rating[] @relation("Rater")
+  ratingsReceived Rating[] @relation("Ratee")
+
   skillsOffered   UserSkillOffered[]
   skillsWanted    UserSkillWanted[]
   
@@ -86,7 +92,34 @@ model SwapRequest {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  requesterHasRated Boolean @default(false)
+  requesteeHasRated Boolean @default(false)
+
+  ratings Rating[]
 }
+
+model Rating {
+  id        String   @id @default(cuid())
+  score     Int      // e.g., 1 to 5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Relation to the user who GAVE the rating
+  rater     User   @relation("Rater", fields: [raterId], references: [id], onDelete: Cascade)
+  raterId   String
+
+  // Relation to the user who RECEIVED the rating
+  ratee     User   @relation("Ratee", fields: [rateeId], references: [id], onDelete: Cascade)
+  rateeId   String
+
+  // Relation to the swap request this rating is for
+  swapRequest   SwapRequest @relation(fields: [swapRequestId], references: [id], onDelete: Cascade)
+  swapRequestId String
+}
+
+// ... other models ...
+
 
 
 // Models required by NextAuth.js
