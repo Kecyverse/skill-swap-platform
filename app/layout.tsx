@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
-import { ThemeProvider } from "@/components/ThemeProvider"; // <-- Import ThemeProvider
+import { ThemeProvider } from "@/components/Providers"; // <-- Import ThemeProvider
 import { Providers } from "@/components/Providers";
 
 
